@@ -70,11 +70,11 @@ in
         '';
       };
 
-      # I get this error when enabling modesetting
+      # I get this error when enabling modesetting on Jetpack 5
       # [   14.243184] NVRM gpumgrGetSomeGpu: Failed to retrieve pGpu - Too early call!.
       # [   14.243188] NVRM nvAssertFailedNoLog: Assertion failed: NV_FALSE @ gpu_mgr.c:
       modesetting.enable = mkOption {
-        default = false;
+        default = cfg.majorVersion != "5";
         type = types.bool;
         description = "Enable kernel modesetting";
       };
@@ -260,15 +260,17 @@ in
         else
           pkgs.nvidia-jetpack.kernelPackages;
 
+      boot.consoleLogLevel = 7;
+
       boot.kernelParams = [
         # Needed on Orin at least, but upstream has it for both
-        "nvidia.rm_firmware_active=all"
+        "nvidia.rm_firmware_active=all" # TODO: Remove
       ]
       ++ lib.optionals cfg.console.enable [
         "console=tty0" # Output to HDMI/DP. May need fbcon=map:0 as well
         "console=ttyTCU0,115200" # Provides console on "Tegra Combined UART" (TCU)
       ]
-      ++ lib.optional (lib.hasPrefix "xavier-" cfg.som || cfg.som == "generic") "video=efifb:off"; # Disable efifb driver, which crashes Xavier NX and possibly AGX
+      ++ lib.optional (lib.hasPrefix "xavier-" cfg.som || cfg.som == "generic" || cfg.majorVersion == "6") "video=efifb:off"; # Disable efifb driver, which crashes Xavier NX and possibly AGX
 
       boot.initrd.includeDefaultModules = false; # Avoid a bunch of modules we may not get from tegra_defconfig
       boot.initrd.availableKernelModules = [ "xhci-tegra" "ucsi_ccg" "typec_ucsi" "typec" ] # Make sure USB firmware makes it into initrd
@@ -288,14 +290,14 @@ in
 
       boot.kernelModules =
         [ "nvgpu" ]
-        ++ lib.optionals cfg.modesetting.enable [
-          "tegra-udrm" # For Xavier`
-          "nvidia-drm" # For Orin
-        ];
+        ++ lib.optional (cfg.modesetting.enable && cfg.majorVersion == "5") "tegra-udrm" # For Xavier`
+        ++ lib.optional cfg.modesetting.enable "nvidia-drm"; # For Orin
 
-      boot.extraModprobeConfig = lib.optionalString cfg.modesetting.enable ''
+      boot.extraModprobeConfig = lib.optionalString (cfg.majorVersion == "6") ''
+        options nvgpu devfreq_timer="delayed"
+      '' + lib.optionalString cfg.modesetting.enable ''
         options tegra-udrm modeset=1
-        options nvidia-drm modeset=1
+        options nvidia-drm modeset=1 ${lib.optionalString (cfg.majorVersion == "6") "fbdev=1"}
       '';
 
       boot.extraModulePackages =
@@ -372,7 +374,7 @@ in
       # Force the driver, since otherwise the fbdev or modesetting X11 drivers
       # may be used, which don't work and can interfere with the correct
       # selection of GLX drivers.
-      services.xserver.drivers = lib.mkForce (
+      services.xserver.drivers = lib.mkIf (cfg.majorVersion == "5") (lib.mkForce (
         lib.singleton {
           name = "nvidia";
           modules = [ pkgs.nvidia-jetpack.l4t-3d-core ];
@@ -381,7 +383,7 @@ in
             Option "AllowEmptyInitialConfiguration" "true"
           '';
         }
-      );
+      ));
 
       # If we aren't using modesetting, we won't have a DRM device with the
       # "master-of-seat" tag, so "loginctl show-seat seat0" reports

@@ -10,17 +10,10 @@
 , ...
 }:
 let
-  patchedBsp = applyPatches {
-    name = "patchedBsp";
-    src = bspSrc;
-    patches = [
-      ./Makefile.diff
-    ];
-  };
-
   mkCopyProjectCommand = project: ''
+    echo "Copying ${project} to ${project.name}"
     mkdir -p "$out/${project.name}"
-    cp --no-preserve=all -vr "${project}"/. "$out/${project.name}"
+    cp --no-preserve=all -r "${project}"/. "$out/${project.name}"
   '';
 
   l4t-oot-projects = [
