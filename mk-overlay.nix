@@ -4,6 +4,8 @@
 
 { jetpackMajorMinorPatchVersion
 , l4tMajorMinorPatchVersion
+  # Used to handle cases where the BSP package version doesn't match the L4T version....
+, bspMajorMinorPatchVersion ? l4tMajorMinorPatchVersion
 , cudaMajorMinorPatchVersion
 , cudaDriverMajorMinorVersion
 , bspHash
@@ -55,7 +57,7 @@ makeScope final.newScope (self: {
         # https://developer.nvidia.com/embedded/jetson-linux-archive
         # https://repo.download.nvidia.com/jetson/
         src = final.fetchurl {
-          url = "https://developer.download.nvidia.com/embedded/L4T/r${versions.major l4tMajorMinorPatchVersion}_Release_v${versions.minor l4tMajorMinorPatchVersion}.${versions.patch l4tMajorMinorPatchVersion}/release/Jetson_Linux_R${l4tMajorMinorPatchVersion}_aarch64.tbz2";
+          url = "https://developer.download.nvidia.com/embedded/L4T/r${versions.major bspMajorMinorPatchVersion}_Release_v${versions.minor bspMajorMinorPatchVersion}.${versions.patch bspMajorMinorPatchVersion}/release/Jetson_Linux_R${bspMajorMinorPatchVersion}_aarch64.tbz2";
           hash = bspHash;
         };
         # We use a more recent version of bzip2 here because we hit this bug

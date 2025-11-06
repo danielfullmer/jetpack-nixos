@@ -51,7 +51,10 @@ def main():
 
         if relpath not in data and relpath not in REPOS_TO_SKIP:
             print(f"Checking out {giturl}")
-            data[relpath] = fetch_git(giturl, tag)
+            try:
+                data[relpath] = fetch_git(giturl, tag)
+            except subprocess.CalledProcessError:
+                print(f"Skipping {giturl}")
 
         with open(filename, "w") as fd:
             fd.write(json.dumps(data, sort_keys=True, indent=2, separators=(",", ": ")))

@@ -28,7 +28,8 @@ in
     {
       # Below 3 are from release notes
       jetpackMajorMinorPatchVersion = "5.1.5";
-      l4tMajorMinorPatchVersion = "35.6.2";
+      l4tMajorMinorPatchVersion = "35.6.3";
+      bspMajorMinorPatchVersion = "35.6.2"; # Nvidia has not released a real BSP for this release...
       cudaMajorMinorPatchVersion = "11.4.298";
 
       # used to version libnvidia-ptxjitcompiler.so. L4T r35 uses l4tMajorMinorPatchVersion, so set to null
@@ -44,7 +45,8 @@ in
     {
       # Below 3 are from release notes
       jetpackMajorMinorPatchVersion = "6.2.1";
-      l4tMajorMinorPatchVersion = "36.4.4";
+      l4tMajorMinorPatchVersion = "36.4.7";
+      bspMajorMinorPatchVersion = "36.4.4"; # Nvidia has not released a real BSP for this release...
       cudaMajorMinorPatchVersion = "12.6.10";
 
       # nix build .#legacyPacakges.nvidia-l4t-3d-core.src; unpack the deb; find libnvidia-ptxjitcompiler.so
