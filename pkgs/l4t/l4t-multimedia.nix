@@ -11,6 +11,7 @@
 , l4t-cuda
 , l4t-multimedia
 , l4t-nvsci
+, l4tMajorMinorPatchVersion
 , l4tAtLeast
 , l4tOlder
 , lib
@@ -48,12 +49,34 @@ buildFromDebs {
   ];
   buildInputs = [ l4t-core l4t-cuda l4t-nvsci pango alsa-lib ] ++ (with gst_all_1; [ gstreamer gst-plugins-base ]);
 
-  patches = lib.optionals (l4tOlder "36") [
-    (fetchpatch {
-      url = "https://raw.githubusercontent.com/OE4T/meta-tegra/af0a93313c13e9eac4e80082d8a8e8ac5f7ad6e8/recipes-multimedia/argus/files/0005-Remove-DO-NOT-USE-declarations-from-v4l2_nv_extensio.patch";
-      hash = "sha256-2PvlpGiz9evu3lc2R8nGYmC1jn8rqLo23dQ1cDvuCyo=";
-      stripLen = 1;
-      extraPrefix = "src/jetson_multimedia_api/";
+  outputs = [ "out" "dev" "samples" "doc" ];
+
+  patches = [
+    (lib.getAttr (lib.versions.major l4tMajorMinorPatchVersion) {
+      "35" = [
+        (fetchpatch {
+          url = "https://raw.githubusercontent.com/OE4T/meta-tegra/af0a93313c13e9eac4e80082d8a8e8ac5f7ad6e8/recipes-multimedia/argus/files/0005-Remove-DO-NOT-USE-declarations-from-v4l2_nv_extensio.patch";
+          sha256 = "sha256-2PvlpGiz9evu3lc2R8nGYmC1jn8rqLo23dQ1cDvuCyo=";
+          stripLen = 1;
+          extraPrefix = "src/jetson_multimedia_api/";
+        })
+      ];
+      "36" = [
+        (fetchpatch {
+          url = "https://raw.githubusercontent.com/OE4T/meta-tegra/2b51abd5b3e2436f8eeb98e8f985806521379174/recipes-multimedia/argus/files/0001-Remove-DO-NOT-USE-declarations-from-v4l2_nv_extensio.patch";
+          sha256 = "sha256-UyMWqfywXdNB+hyTa9bUBv59f9RVIs+DVIBSWSs6Tv0=";
+          stripLen = 1;
+          extraPrefix = "src/jetson_multimedia_api/";
+        })
+      ];
+      "38" = [
+        (fetchpatch {
+          url = "https://raw.githubusercontent.com/OE4T/meta-tegra/992c0f9e170ad1e60aa3272ecb2db0e4f967a576/recipes-multimedia/argus/files/0001-Remove-DO-NOT-USE-declarations-from-v4l2_nv_extensio.patch";
+          sha256 = "sha256-19WpISmVK5QAqOEccusPmh7UTd8x/7sZ085OUetivtA=";
+          stripLen = 1;
+          extraPrefix = "src/jetson_multimedia_api/";
+        })
+      ];
     })
     (fetchpatch {
       url = "https://raw.githubusercontent.com/OE4T/meta-tegra/cc1c28f05fbd1b511d3bca3795dd9b6a35df5914/recipes-multimedia/argus/tegra-mmapi-samples/0004-samples-classes-fix-a-data-race-in-shutting-down-deq.patch";
@@ -62,8 +85,9 @@ buildFromDebs {
       extraPrefix = "src/jetson_multimedia_api/";
     })
   ];
+
   postPatch = ''
-    cp -r src/jetson_multimedia_api/{argus,include,samples} .
+    mv src/jetson_multimedia_api/* .
     rm -rf src
 
     # Replace nvidia's v4l libs with ours. Copy them instead of symlinking so we can modify them
@@ -98,6 +122,22 @@ buildFromDebs {
           --replace-needed libnvos.so libnvos_multimedia.so
       fi
     done
+
+    # Remove unused camera app
+    rm -rf argus/apps
+  '';
+
+  preInstall = ''
+    # Manually move some argus bits that aren't picked up by automatic nixpkgs stuff
+    mkdir -p $dev/argus
+    mv argus/{include,cmake} $dev/argus
+
+    mkdir -p $samples/argus
+    mv {data,samples,tools,Makefile} $samples/
+    mv argus/samples $samples/argus
+
+    mkdir -p $doc/argus
+    mv argus/docs $doc/argus
   '';
 
   runtimeDependencies = [ l4t-nvsci ];
