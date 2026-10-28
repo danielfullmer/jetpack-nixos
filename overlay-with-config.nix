@@ -183,7 +183,9 @@ final: prev: (
             done
 
             mount -t configfs none /sys/kernel/config
-            if [ -e /sys/kernel/config/usb_gadget ] ; then
+            # Flashing from the IGX BMC passes jetpack_flash_no_usb_serial: nothing on the BMC
+            # reads the gadget serial, so writes to it would block once its buffer fills.
+            if [ -e /sys/kernel/config/usb_gadget ] && ! grep -qw jetpack_flash_no_usb_serial /proc/cmdline ; then
               # https://origin.kernel.org/doc/html/v5.10/usb/gadget_configfs.html
               gadget=/sys/kernel/config/usb_gadget/g.1
               mkdir $gadget

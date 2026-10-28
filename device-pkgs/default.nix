@@ -17,6 +17,8 @@
 , deviceTree
 , tio
 , expect
+, fetchurl
+, python3
 }:
 
 let
@@ -28,6 +30,7 @@ let
     flashInitrd
     mkFlashScript
     l4tMajorMinorPatchVersion
+    socType
     l4tAtLeast
     ;
 
@@ -68,8 +71,8 @@ let
     meta.platforms = [ "x86_64-linux" ];
   };
 
-  # Produces a script that boots a given kernel, initrd, and cmdline using the RCM boot method.
-  mkRcmBootScript = { kernelPath, initrdPath, kernelCmdline, ... }@args: mkFlashScriptAuto (
+  # mkFlashScript arguments that boot a given kernel, initrd, and cmdline using the RCM boot method
+  mkRcmBootArgs = { kernelPath, initrdPath, kernelCmdline, ... }@args:
     builtins.removeAttrs args [ "kernelPath" "initrdPath" "kernelCmdline" ] // {
       preFlashCommands = ''
         cp ${kernelPath} kernel/Image
@@ -119,8 +122,10 @@ let
           cd bootloader; bash ./flashcmd.txt
         )
       '';
-    }
-  );
+    };
+
+  # Produces a script that boots a given kernel, initrd, and cmdline using the RCM boot method
+  mkRcmBootScript = args: mkFlashScriptAuto (mkRcmBootArgs args);
 
   # Produces a script which boots into this NixOS system via RCM mode
   rcmBoot = writeShellApplication {
@@ -134,13 +139,34 @@ let
     meta.platforms = [ "x86_64-linux" ];
   };
 
+  initrdFlashRcmArgs = import ./initrdflash-rcm-args.nix { inherit config flashInitrd lib l4tMajorMinorPatchVersion writeText deviceTree; };
+
   # TODO: The flash script should not have the kernel output in its runtime closure
   initrdFlashScript =
     writeShellApplication {
       name = "initrd-flash-${cfg.name}";
-      text = import ./initrdflash-script.nix { inherit mkRcmBootScript config flashInitrd lib l4tMajorMinorPatchVersion writeText deviceTree tio expect; };
+      text = import ./initrdflash-script.nix {
+        inherit config flashInitrd lib writeText tio expect;
+        rcmScript = mkRcmBootScript initrdFlashRcmArgs;
+      };
       meta.platforms = [ "x86_64-linux" ];
     };
+
+  # Firmware package for the IGX BMC's update service (Web UI / Redfish). The BMC RCM-boots the
+  # flash initrd on the IGX host, like initrdFlashScript does from a host PC.
+  igxBmcQspiFwpkg = import ./igx-bmc-fwpkg.nix {
+    inherit config lib runCommand writeText fetchurl python3 socType l4tMajorMinorPatchVersion;
+    # The BMC runs the commands from rcmboot_blob/, so the flash-tools must be specialized to a
+    # single variant (sign now, flash later), regardless of how many variants the host flash
+    # scripts support.
+    flash-tools = nvidia-jetpack.flash-tools-flashcmd.override {
+      inherit mkFlashScript;
+      mkFlashScriptArgs = mkRcmBootArgs (initrdFlashRcmArgs // {
+        # Nothing on the BMC reads the flash initrd's USB serial gadget.
+        kernelCmdline = initrdFlashRcmArgs.kernelCmdline ++ [ "jetpack_flash_no_usb_serial" ];
+      });
+    };
+  };
 
   fuseScript = writeShellApplication {
     name = "fuse-${cfg.name}";
@@ -234,7 +260,7 @@ let
     '';
 in
 {
-  inherit initrdFlashScript legacyFlashScript fuseScript rcmBoot pkcListComboHash mkRcmBootScript;
+  inherit initrdFlashScript legacyFlashScript fuseScript rcmBoot pkcListComboHash mkRcmBootScript igxBmcQspiFwpkg;
   flashScript = initrdFlashScript;
 }
   // (lib.optionalAttrs cfg.firmware.fskp.enable { inherit fskpFuseScript; })
