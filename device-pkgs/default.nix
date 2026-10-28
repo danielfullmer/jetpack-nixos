@@ -28,6 +28,7 @@ let
   inherit (pkgs.nvidia-jetpack)
     chipId
     flashInitrd
+    flashing-uefi-firmware
     mkFlashScript
     l4tMajorMinorPatchVersion
     socType
@@ -80,6 +81,8 @@ let
 
         export CMDLINE="${builtins.toString kernelCmdline}"
         export INITRD_IN_BOOTIMG="yes"
+      '' + lib.optionalString (flashing-uefi-firmware != null) ''
+        cp ${flashing-uefi-firmware}/uefi_jetson.bin bootloader/uefi_bins/uefi_${flashing-uefi-firmware.defconfig}.bin
       '' + lib.optionalString (cfg.firmware.secureBoot.pkcFile != null) ''
         # If secure boot is enabled, nvidia requires the kernel to be signed
         (
@@ -96,6 +99,9 @@ let
 
       flashArgs =
         [ "--rcm-boot" ]
+        # Like NVIDIA's l4t_initrd_flash, RCM-boot the board's flashing UEFI if it has one; the UEFI
+        # persisted to the device is unaffected.
+        ++ lib.optionals (flashing-uefi-firmware != null) [ "-F" "uefi_${flashing-uefi-firmware.defconfig}" ]
         # JetPack 7 wants to rebuild system.img with rootfs by default, we don't want that
         ++ lib.optional (jetpackAtLeast "7") "-r"
         # A little jank, but don't have the flash script itself actually flash, just produce the flashcmd.txt file

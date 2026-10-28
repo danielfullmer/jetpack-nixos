@@ -99,6 +99,15 @@ final: prev: (
         inherit (cfg.firmware.uefi.capsuleAuthentication) trustedPublicCertPemFile;
       });
 
+      # The UEFI that board confs name in _FLASHING_UEFI, which NVIDIA's tools RCM-boot to flash
+      # (igx-thor-devkit.conf: uefi_t26x_minimal; the general IGX UEFI tries network boot instead of
+      # boot.img). Built like uefi-firmware because NVIDIA's prebuilt one asserts without the fTPM TA,
+      # which our tos.img omits unless fTPM is enabled.
+      flashing-uefi-firmware =
+        if cfg.carrierBoard == "igx-devkit"
+        then finalJetpack.uefi-firmware.override { defconfig = "${finalJetpack.socFamily}_minimal"; }
+        else null;
+
       jetsonStandaloneMMOptee = prevJetpack.jetsonStandaloneMMOptee.override
         {
           inherit (cfg.firmware.uefi)
