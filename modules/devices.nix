@@ -238,5 +238,28 @@ in
           "rtl_nic/rtl8156b-2.fw"
         ]))
       ];
+    })
+    (lib.mkIf (cfg.som == "thor-agx" && cfg.carrierBoard == "igx-devkit") {
+      # NVIDIA's 38.5 IGX device tree has this; the r39 sources dropped it. It makes UEFI pulse PERST#
+      # at ExitBootServices on the controller holding the AST2600 BMC's PCIe functions. Without it the
+      # BMC's EHCI keeps running UEFI's schedule into Linux (SMMU fault, "EMEM address decode error"),
+      # and the BMC's USB virtual hub and host interface NIC fail to enumerate.
+      hardware.deviceTree.overlays = [{
+        name = "igx-uefi-exit-reset";
+        filter = "tegra264-p3740-0002+p3834-0008";
+        dtsText = ''
+          /dts-v1/;
+          /plugin/;
+          / {
+            compatible = "nvidia,p3740-0002+p3834-0008";
+            fragment@0 {
+              target-path = "/bus@0/pcie@a808400000";
+              __overlay__ {
+                nvidia,uefi-exit-reset;
+              };
+            };
+          };
+        '';
+      }];
     })]);
 }
