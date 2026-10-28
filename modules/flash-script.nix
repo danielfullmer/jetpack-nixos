@@ -553,10 +553,15 @@ in
               { boardid = "3668"; boardsku = "0003"; fab = "301"; boardrev = ""; fuselevel = "fuselevel_production"; chiprev = "2"; }
             ];
 
-            thor-agx = [
-              { boardid = "3834"; boardsku = "0008"; fab = "000"; boardrev = ""; fuselevel = "fuselevel_production"; chiprev = ""; chipsku = "00:00:00:A0"; } # Thor AGX Devkit
-              { boardid = "3834"; boardsku = "0008"; fab = "401"; boardrev = ""; fuselevel = "fuselevel_production"; chiprev = ""; chipsku = "00:00:00:A0"; }
-            ];
+            thor-agx =
+              if cfg.carrierBoard == "igx-devkit" then [
+                # SoM EEPROM 3834-0008-401, as in NVIDIA's tools/bmc_flash/l4t_generate_igx_qspi_for_bmcflash.sh.
+                # A single variant lets the IGX BMC, which cannot detect the board, flash it.
+                { boardid = "3834"; boardsku = "0008"; fab = "401"; boardrev = ""; fuselevel = "fuselevel_production"; chiprev = ""; chipsku = "00:00:00:A0"; }
+              ] else [
+                { boardid = "3834"; boardsku = "0008"; fab = "000"; boardrev = ""; fuselevel = "fuselevel_production"; chiprev = ""; chipsku = "00:00:00:A0"; } # Thor AGX Devkit
+                { boardid = "3834"; boardsku = "0008"; fab = "401"; boardrev = ""; fuselevel = "fuselevel_production"; chiprev = ""; chipsku = "00:00:00:A0"; }
+              ];
 
             thor-agx-t4000 = [
               { boardid = "3834"; boardsku = "0000"; fab = "000"; boardrev = ""; fuselevel = "fuselevel_production"; chiprev = ""; chipsku = "00:00:00:E2"; }
