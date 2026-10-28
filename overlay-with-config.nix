@@ -92,6 +92,9 @@ final: prev: (
         # this argument (their fn args don't include enableFTPM), so we only
         # pass it on r38+.
         enableFTPM = cfg.firmware.optee.ftpm.enable;
+      } // lib.optionalAttrs (cfg.carrierBoard == "igx-devkit") {
+        # Matches UEFI_IMAGE in the BSP's igx-thor-devkit.conf.
+        defconfig = "${finalJetpack.socFamily}_general_igx";
       } // lib.optionalAttrs cfg.firmware.uefi.capsuleAuthentication.enable {
         inherit (cfg.firmware.uefi.capsuleAuthentication) trustedPublicCertPemFile;
       });

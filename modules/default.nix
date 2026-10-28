@@ -105,6 +105,9 @@ in
 
           # Use this, if you would like to use Orin NX SOM with the original Xavier NX Devkit module (p3509-a02),
           "xavierNxDevkit"
+
+          # NVIDIA IGX developer kit (p3740-0002), with an AGX Thor (p3834-0008) SoM.
+          "igx-devkit"
         ];
         default = "generic";
         description = ''

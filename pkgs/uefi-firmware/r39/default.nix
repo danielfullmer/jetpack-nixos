@@ -95,6 +95,11 @@ let
   mkStuartDrv = callPackage ../stuart.nix (args // { srcs = patchedRepos; uniqueHash = fakeHash; });
 
   unstamped-firmware = mkStuartDrv {
+    # The IGX defconfigs also build RedfishPkg and RegularExpressionDxe (oniguruma), which are not C23-clean; GCC 15
+    # defaults to C23.
+    env = lib.optionalAttrs (lib.hasSuffix "_igx" defconfig) {
+      NIX_CFLAGS_COMPILE = "-std=gnu17";
+    };
     platformBuild = "Tegra";
     stuartExtraArgs = "--init-defconfig edk2-nvidia/Platform/NVIDIA/Tegra/DefConfigs/${defconfig}.defconfig";
     outputs = [

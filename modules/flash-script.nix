@@ -301,6 +301,8 @@ in
                 "orinnano-board-spec.txt"
               else if cfg.som == "orin-nx" then
                 "orinnx-board-spec.txt"
+              else if cfg.som == "thor-agx" && cfg.carrierBoard == "igx-devkit" then
+                "igx-thor-board-spec.txt"
               else
                 "${cfg.som}-board-spec.txt"
             );

@@ -145,7 +145,7 @@ lib.extendMkDerivation {
         # trick taken from https://src.fedoraproject.org/rpms/edk2/blob/08f2354cd280b4ce5a7888aa85cf520e042955c3/f/edk2.spec#_319
         ${"GCC5_${targetArch}_PREFIX"} = stdenv.cc.targetPrefix;
         ${"GCC_${targetArch}_PREFIX"} = stdenv.cc.targetPrefix;
-      } // env;
+      } // builtins.removeAttrs env [ "NIX_CFLAGS_COMPILE" ];
 
       # see nixpkgs/pkgs/by-name/ed/edk2/package.nix
       hardeningDisable = [

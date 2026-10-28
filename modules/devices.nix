@@ -48,9 +48,14 @@ in
     services.nvpmodel.enable = mkIf (cfg.som != "generic") (mkDefault true);
 
     # Set fan control service if we have a config for it
-    services.nvfancontrol.configFile = mkIf (nvfancontrolConf ? "${cfg.som}") (mkDefault nvfancontrolConf.${cfg.som});
+    services.nvfancontrol.configFile = mkIf (nvfancontrolConf ? "${cfg.som}") (mkDefault (
+      if cfg.som == "thor-agx" && cfg.carrierBoard == "igx-devkit" then
+        "${pkgs.nvidia-jetpack.l4t-nvfancontrol}/etc/nvpower/nvfancontrol/nvfancontrol_p3834_0008_p3740_0002.conf"
+      else
+        nvfancontrolConf.${cfg.som}
+    ));
     # Enable the fan control service if it's a devkit
-    services.nvfancontrol.enable = mkIf (cfg.carrierBoard == "devkit" || cfg.carrierBoard == "xavierNxDevkit") (mkDefault true);
+    services.nvfancontrol.enable = mkIf (lib.elem cfg.carrierBoard [ "devkit" "xavierNxDevkit" "igx-devkit" ]) (mkDefault true);
 
     hardware.nvidia-jetpack.flashScriptOverrides =
       let
@@ -124,7 +129,7 @@ in
         })
 
         (mkIf (cfg.som == "thor-agx") {
-          targetBoard = mkDefault "jetson-agx-thor-devkit";
+          targetBoard = mkDefault (if cfg.carrierBoard == "igx-devkit" then "igx-thor-devkit" else "jetson-agx-thor-devkit");
         })
 
         (mkIf (cfg.som == "thor-agx-t4000") {

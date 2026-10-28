@@ -16,6 +16,7 @@ This package supports JetPack 5, 6, and 7. It works with NVIDIA's developer kits
 |       Device       | JetPack 5 | JetPack 6 | JetPack 7 |
 | ------------------ | --------- | --------- | --------- |
 | Jetson Thor AGX    |           |           |     ✓     |
+| IGX Thor           |           |           |     ✓     |
 | Jetson Orin AGX    |     ✓     |     ✓     |     ✓     |
 | Jetson Orin NX     |     ✓     |     ✓     |     ✓     |
 | Jetson Orin Nano   |     ✓     |     ✓     |     ✓     |
