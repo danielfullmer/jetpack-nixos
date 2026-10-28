@@ -119,7 +119,7 @@ let
     {
       nativeBuildInputs = [ python3 buildPackages.nvidia-jetpack.patchfv ];
       passthru = {
-        inherit biosVersion;
+        inherit biosVersion defconfig;
         inherit (unstamped-firmware.passthru) srcs;
       };
     } ''

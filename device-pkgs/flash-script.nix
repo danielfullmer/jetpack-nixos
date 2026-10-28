@@ -6,7 +6,6 @@
 , flashArgs ? [ ]
 , partitionTemplate ? null
 , socType ? null
-, socFamily ? null
 , # Optional directory containing DTBs to be used by flashing script, which can
   # be used by the bootloader(s) and passed to the kernel.
   dtbsDir ? null
@@ -24,7 +23,8 @@
 }:
 let
   uefi_bins = if l4tAtLeast "38" then "bootloader/uefi_bins" else "bootloader";
-  uefi_image = if l4tAtLeast "38" then "uefi_${socFamily}_general.bin" else "uefi_jetson.bin";
+  # Board .conf files select uefi_bins/uefi_<defconfig>.bin (e.g. uefi_t26x_general_igx.bin on IGX).
+  uefi_image = if l4tAtLeast "38" then "uefi_${uefi-firmware.defconfig}.bin" else "uefi_jetson.bin";
 in
 (''
   set -euo pipefail

@@ -172,7 +172,7 @@ let
     name = "fuse-${cfg.name}";
     text = import ./flash-script.nix {
       inherit lib l4tAtLeast;
-      inherit (nvidia-jetpack) flash-tools socFamily;
+      inherit (nvidia-jetpack) flash-tools;
       flashCommands = ''
         (
           if [ "''${JP_FUSE_PRESIGN:-}" = "1" ]; then
@@ -198,7 +198,7 @@ let
       # runtimeInputs = flash-tools.passthru.flashDeps;
       text = import ./flash-script.nix {
         inherit lib l4tAtLeast;
-        inherit (nvidia-jetpack) flash-tools socFamily;
+        inherit (nvidia-jetpack) flash-tools;
         flashCommands = ''
           (
             # `convert.sh` needs the correct bsp root dir when using non-standard board config files.
